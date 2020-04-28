@@ -1,0 +1,21 @@
+server:
+  port: 8090
+  error:
+    whitelabel:
+      enabled: false
+  servlet:
+    context-path: /interview-service
+
+
+spring:
+  data:
+    mongodb:
+      host: ${MONGODB_HOST}
+      database: ${MONGO_INITDB_DATABASE}
+      authentication-database: admin
+      username: ${MONGO_INITDB_ROOT_USERNAME}
+      password: ${MONGO_INITDB_ROOT_PASSWORD}
+      port: 27017
+  jackson:
+    date-format: com.fasterxml.jackson.databind.util.StdDateFormat
+    default-property-inclusion: non_null
