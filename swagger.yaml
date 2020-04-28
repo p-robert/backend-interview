@@ -1,0 +1,451 @@
+openapi: "3.0.2"
+info:
+  title: Avira SafeThings Interview-Service API v1
+  version: 1.0.0
+
+servers:
+  - url: "http://localhost:8090/interview-service/api/v1"
+paths:
+  /users:
+    get:
+      tags:
+        - users
+      summary: "Get list of all users"
+      parameters:
+        - $ref: "#/components/parameters/filterCreatedAfter"
+        - $ref: "#/components/parameters/filterCreatedBefore"
+        - $ref: "#/components/parameters/filterUpdatedAfter"
+        - $ref: "#/components/parameters/filterUpdatedBefore"
+      responses:
+        "200":
+          $ref: "#/components/responses/UsersGetResponse"
+    post:
+      tags:
+        - users
+      summary: "Create a new user"
+      requestBody:
+        $ref: "#/components/requestBodies/UsersPostRequest"
+      responses:
+        "200":
+          $ref: "#/components/responses/UsersGetResponse"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "409":
+          $ref: "#/components/responses/ExistsRequest"
+  /users/{userId}:
+    get:
+      tags:
+        - users
+      summary: "Get user by id"
+      parameters:
+        - $ref: "#/components/parameters/userId"
+      responses:
+        "200":
+          $ref: "#/components/responses/UsersGetByIdResponse"
+        "404":
+          $ref: "#/components/responses/NotFound"
+  /stats/devices:
+    get:
+      tags:
+        - stats
+      summary: "Get aggregated statistics about the devices based on filter parameters"
+      parameters:
+        - $ref: "#/components/parameters/filterGroupBy"
+        - $ref: "#/components/parameters/filterUserId"
+        - $ref: "#/components/parameters/filterVendor"
+        - $ref: "#/components/parameters/filterDeviceCategoryId"
+        - $ref: "#/components/parameters/filterDeviceSubcategoryId"
+        - $ref: "#/components/parameters/filterCreatedAfter"
+        - $ref: "#/components/parameters/filterCreatedBefore"
+        - $ref: "#/components/parameters/filterUpdatedAfter"
+        - $ref: "#/components/parameters/filterUpdatedBefore"
+      responses:
+        "200":
+          $ref: "#/components/responses/DevicesStatsGetResponse"
+components:
+  parameters:
+    filterGroupBy:
+      in: query
+      required: true
+      name: filter[groupBy]
+      schema:
+        type: string
+        enum:
+          - userId
+          - deviceCategoryId
+          - vendor
+        example:
+          - vendor
+      description: "Filter group by element"
+    filterVendor:
+      in: query
+      name: filter[vendor]
+      schema:
+        type: string
+        example: "Samsung"
+      description: "Filter by vendor type"
+    filterDeviceCategoryId:
+      in: query
+      name: filter[deviceCategoryId]
+      schema:
+        type: integer
+        example: 1
+      description: "Filter by device category Id. See devicesCategories endpoint for all available values"
+    filterDeviceSubcategoryId:
+      in: query
+      name: filter[deviceSubcategoryId]
+      schema:
+        type: integer
+        example: 101
+      description: "Filter by device subcategory type Id. See devicesSubcategories endpoint for all available values"
+    filterUserId:
+      in: query
+      name: filter[userId]
+      schema:
+        type: string
+        example: 2343245325
+      description: "Filter by userId"
+    userId:
+      in: path
+      name: userId
+      schema:
+        type: string
+      required: true
+      description: "User ID in database"
+      example: 3213fesf43r23423
+    filterCreatedBefore:
+      in: query
+      name: filter[createdBefore]
+      schema:
+        type: string
+        example: "2000-02-24T00:00:00Z"
+      description: "Filter only results that were created before this date"
+
+    filterCreatedAfter:
+      in: query
+      name: filter[createdAfter]
+      schema:
+        type: string
+        example: "2000-02-24T00:00:00Z"
+      description: "Filter only results that were created after this date"
+
+    filterUpdatedBefore:
+      in: query
+      name: filter[updatedBefore]
+      schema:
+        type: string
+        example: "2000-02-24T00:00:00Z"
+      description: "Filter only results that were updated before this date"
+
+    filterUpdatedAfter:
+      in: query
+      name: filter[updatedAfter]
+      schema:
+        type: string
+        example: "2000-02-24T00:00:00Z"
+      description: "Filter only results that were updated after this date"
+
+  responses:
+    NotFound:
+      description: "The resource was not found"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponseSchema"
+    BadRequest:
+      description: "Bad request sent to the server"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponseSchema"
+    ExistsRequest:
+      description: "The resource already exists"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponseSchema"
+    UsersGetResponse:
+      description: "List of users"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UsersGetResponseSchema"
+    UsersGetByIdResponse:
+      description: "User Entity"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UsersGetByIdResponseSchema"
+    DevicesStatsGetResponse:
+      description: "Get devices statistics"
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/DevicesStatsGetResponseSchema"
+  schemas:
+    JsonApiBaseRequestSchema:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            type:
+              type: string
+              description: Type of data that is sent to the API
+            attributes:
+              type: object
+              description: Different attributes based on call type/method.
+    JsonApiBaseResponseSchema:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: A unique identifier of the resource
+              type:
+                type: string
+                description: Type of data that is sent to the API
+              attributes:
+                type: object
+                description: Different attributes based on call type/method.
+    ErrorResponseSchema:
+      readOnly: true
+      type: object
+      properties:
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                description: The unique identifier of the request.
+              status:
+                type: number
+                description: The HTTP status code of the response.
+              code:
+                type: number
+                description: An application error code.
+              title:
+                type: string
+                description: The alias of the error.
+              detail:
+                type: string
+                description: Detailed message error. Human readable.
+
+    UsersGetResponseSchema:
+      allOf:
+        - $ref: "#/components/schemas/JsonApiBaseResponseSchema"
+        - type: object
+          properties:
+            meta:
+              type: object
+              properties:
+                filter:
+                  type: object
+                  properties:
+                    filter[createdAfter]:
+                      type: string
+                      example: "1976-02-24T00:00:00Z"
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "5d285d066424134318f4924a"
+                  type:
+                    type: string
+                    example: "users"
+                  attributes:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                        example: "Gigi"
+                        description: "user's name"
+                      age:
+                        type: integer
+                        example: 15
+                        description: User age
+                      createdAt:
+                        type: string
+                        example: "1976-02-24T00:00:00Z"
+                        description: UTC ISO Date time
+                      updatedAt:
+                        type: string
+                        example: "1976-02-24T00:00:00Z"
+                        description: UTC ISO Date time
+
+    UsersGetByIdResponseSchema:
+      allOf:
+        - $ref: "#/components/schemas/JsonApiBaseResponseSchema"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                id:
+                  type: string
+                  example: "5d285d066424134318f4924a"
+                type:
+                  type: string
+                  example: "users"
+                attributes:
+                  type: object
+                  properties:
+                    name:
+                      type: string
+                      example: "Gigi"
+                      description: "user's name"
+                    age:
+                      type: integer
+                      example: 15
+                      description: "User age"
+                    createdAt:
+                      type: string
+                      example: "1976-02-24T00:00:00Z"
+                      description: UTC ISO Date time
+                    updatedAt:
+                      type: string
+                      example: "1976-02-24T00:00:00Z"
+                      description: UTC ISO Date time
+    UsersPostRequestSchema:
+      allOf:
+        - $ref: "#/components/schemas/JsonApiBaseRequestSchema"
+        - type: object
+          properties:
+            data:
+              type: object
+              properties:
+                type:
+                  type: string
+                  example: "users"
+                attributes:
+                  type: object
+                  required:
+                    - userId
+                    - age
+                    - name
+                  properties:
+                    userId:
+                      type: string
+                      example: "dvwgvdy367evdt326t4t32t6724"
+                      description: "Create a new user with this userId"
+                    age:
+                      type: integer
+                      example: 15
+                      description: "user's age"
+                    name:
+                      type: string
+                      example: "Gigi"
+                      description: "user's name"
+    DevicesStatsGetResponseSchema:
+      allOf:
+        - $ref: "#/components/schemas/JsonApiBaseResponseSchema"
+        - type: object
+          properties:
+            meta:
+              type: object
+              properties:
+                filter:
+                  type: object
+                  properties:
+                    userId:
+                      type: string
+                      example: 31242343fsf32
+                    vendor:
+                      type: string
+                      example: Samsung
+                    deviceCategoryId:
+                      type: integer
+                      example: 1
+                    groupBy:
+                      type: string
+                      example: "userId"
+                    deviceSubcategoryId:
+                      type: integer
+                      example: 101
+            data:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  type:
+                    type: string
+                    example: "devicesStats"
+                  attributes:
+                    type: object
+                    properties:
+                      totalDevices:
+                        type: integer
+                        example: 21321
+                      totalUsers:
+                        type: integer
+                        example: 321231
+                      classification:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            deviceSubcategoryId:
+                              type: integer
+                              example: 101
+                            numberOfDevices:
+                              type: integer
+                              example: 200
+                      groups:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                            type:
+                              type: string
+                              example: "devicesStatsGroup"
+                            data:
+                              type: object
+                              properties:
+                                name:
+                                  type: string
+                                  example: "<userId> or <deviceCategoryId> or <vendor>"
+                                classification:
+                                  type: array
+                                  items:
+                                    type: object
+                                    properties:
+                                      deviceSubcategoryId:
+                                        type: integer
+                                        example: 101
+                                      numberOfDevices:
+                                        type: integer
+                                        example: 200
+                            relationships:
+                              type: array
+                              items:
+                                type: object
+                                properties:
+                                  devices:
+                                    type : object
+                                    properties:
+                                      links:
+                                        type: object
+                                        properties:
+                                          related:
+                                            type: string
+                                            example: /devices?filter[vendor]=Samsung or /devices?filter[userId]=1232341 or /devices?filter[deviceCategoryId]=Computers
+  requestBodies:
+    UsersPostRequest:
+      description: Create a user
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/UsersPostRequestSchema"
